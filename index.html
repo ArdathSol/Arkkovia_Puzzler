@@ -88,42 +88,22 @@
             border: 1px solid black;
         }
 
-        /* Match-3 Styling */
-        .match3-grid {
+        /* Wortspiel Styling */
+        .wortspiel-grid {
             display: grid;
-            grid-template-columns: repeat(8, 40px);
-            grid-template-rows: repeat(8, 40px);
-            gap: 2px;
+            grid-template-columns: repeat(5, 40px);
+            gap: 5px;
             margin-bottom: 20px;
         }
 
-        .match3-cell {
+        .wortspiel-cell {
             width: 40px;
             height: 40px;
             text-align: center;
             font-size: 20px;
             border: 1px solid black;
-            background-color: lightblue;
-        }
-
-        .match3-cell.red {
-            background-color: red;
-        }
-
-        .match3-cell.green {
-            background-color: green;
-        }
-
-        .match3-cell.blue {
-            background-color: blue;
-        }
-
-        .match3-cell.yellow {
-            background-color: yellow;
-        }
-
-        .match3-cell.purple {
-            background-color: purple;
+            background-color: lightgreen;
+            cursor: pointer;
         }
 
         header {
@@ -146,7 +126,6 @@
 </div>
 
 <div id="game-container" class="hidden">
-    <!-- Puzzle area where random games will appear -->
     <div id="puzzle-area"></div>
 
     <div id="game-controls">
@@ -192,15 +171,15 @@
 
     // Randomly select a game to start
     function startRandomGame() {
-        const puzzleTypes = ['schiebepuzzle', 'sudoku', 'match3', 'schiffeVersenken'];
+        const puzzleTypes = ['schiebepuzzle', 'sudoku', 'wortspiel', 'schiffeVersenken'];
         const randomGame = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)];
 
         if (randomGame === 'schiebepuzzle') {
             generateSchiebepuzzle();
         } else if (randomGame === 'sudoku') {
             generateSudoku();
-        } else if (randomGame === 'match3') {
-            generateMatch3();
+        } else if (randomGame === 'wortspiel') {
+            generateWortspiel();
         } else if (randomGame === 'schiffeVersenken') {
             generateSchiffeVersenken();
         }
@@ -238,7 +217,6 @@
             } else {
                 cell.classList.add('empty');
                 cell.innerText = '';
-                emptySpaceIndex = i;
             }
             puzzleArea.appendChild(cell);
         }
@@ -297,11 +275,12 @@
         const puzzleArea = document.createElement('div');
         puzzleArea.classList.add('sudoku-grid');
 
-        sudokuGrid.forEach(row => {
-            row.forEach(num => {
+        sudokuGrid.forEach((row, rowIndex) => {
+            row.forEach((num, colIndex) => {
                 const cell = document.createElement('div');
                 cell.classList.add('sudoku-cell');
                 cell.innerText = num === 0 ? '' : num; // Empty cell
+                cell.contentEditable = num === 0; // Make it editable only if it's empty
                 puzzleArea.appendChild(cell);
             });
         });
@@ -310,46 +289,31 @@
         document.getElementById('puzzle-area').appendChild(puzzleArea);
     }
 
-    // Generate Match-3
-    function generateMatch3() {
-        const grid = [];
-        const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
-        const size = 8;
+    // Generate Wortspiel
+    function generateWortspiel() {
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const gridSize = 5;
+        const wortGrid = document.createElement('div');
+        wortGrid.classList.add('wortspiel-grid');
 
-        for (let i = 0; i < size; i++) {
-            const row = [];
-            for (let j = 0; j < size; j++) {
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                row.push(color);
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const cell = document.createElement('div');
+                cell.classList.add('wortspiel-cell');
+                cell.innerText = letters.charAt(Math.floor(Math.random() * letters.length));
+                cell.addEventListener('click', () => selectLetter(cell));
+                wortGrid.appendChild(cell);
             }
-            grid.push(row);
         }
 
-        const match3Grid = document.createElement('div');
-        match3Grid.classList.add('match3-grid');
-
-        grid.forEach((row, rowIndex) => {
-            row.forEach((color, colIndex) => {
-                const cell = document.createElement('div');
-                cell.classList.add('match3-cell', color);
-                cell.innerText = '●'; // Symbol for match-3
-                match3Grid.appendChild(cell);
-
-                // Click event for match-3 game
-                cell.addEventListener('click', () => {
-                    checkMatch3(rowIndex, colIndex);
-                });
-            });
-        });
-
         document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
-        document.getElementById('puzzle-area').appendChild(match3Grid);
+        document.getElementById('puzzle-area').appendChild(wortGrid);
     }
 
-    function checkMatch3(row, col) {
-        // Check for matches and implement match-3 logic
-        alert(`Match-3 Clicked at Row: ${row}, Col: ${col}`);
-        // Implement the match-3 logic here
+    // Handle letter selection in Wortspiel
+    function selectLetter(cell) {
+        alert(`Buchstabe ausgewählt: ${cell.innerText}`);
+        // Implement further logic for word selection or game mechanics
     }
 
     // Generate Schiffe versenken
