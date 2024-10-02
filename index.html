@@ -8,258 +8,86 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
         }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        #game-container {
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #game-controls {
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        #leaderboard {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        #puzzle-area {
-            margin-top: 20px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Schiffe versenken Styling */
-        #schiffe-grid {
+        .sudoku-grid, .wortspiel-grid, .schiffe-grid {
             display: grid;
-            grid-template-columns: repeat(10, 50px);
-            grid-template-rows: repeat(10, 50px);
-            gap: 2px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(9, 40px);
+            margin: 20px auto;
         }
-
+        .sudoku-cell, .wortspiel-cell, .schiffe-cell {
+            border: 1px solid #000;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
         .schiffe-cell {
-            width: 50px;
-            height: 50px;
-            border: 1px solid black;
-            background-color: lightgray;
+            background-color: lightblue;
+            cursor: pointer;
         }
-
         .hit {
             background-color: red;
         }
-
         .miss {
-            background-color: white;
+            background-color: lightgrey;
         }
-
-        /* Sudoku Styling */
-        .sudoku-grid {
-            display: grid;
-            grid-template-columns: repeat(9, 30px);
-            grid-template-rows: repeat(9, 30px);
-            gap: 2px;
-            margin-bottom: 20px;
+        #puzzle-area {
+            margin: 20px;
         }
-
-        .sudoku-cell {
-            width: 30px;
-            height: 30px;
-            text-align: center;
-            font-size: 16px;
-            border: 1px solid black;
-        }
-
-        /* Wortspiel Styling */
-        .wortspiel-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 40px);
-            gap: 5px;
-            margin-bottom: 20px;
-        }
-
-        .wortspiel-cell {
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            font-size: 20px;
-            border: 1px solid black;
-            background-color: lightgreen;
-            cursor: pointer;
-        }
-
-        header {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #333;
+        #leaderboard {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-<header>Made by Arkkovia</header>
-
 <h1>Unendliches Puzzle Game</h1>
+<p>Made by Arkkovia</p>
 
-<div id="start-screen">
-    <h2>Bitte gib deinen Namen ein</h2>
-    <input type="text" id="player-name" placeholder="Dein Name">
-    <button id="start-button">Spiel starten</button>
-</div>
-
-<div id="game-container" class="hidden">
-    <div id="puzzle-area"></div>
-
-    <div id="game-controls">
-        <p id="time">Zeit: 0 Sekunden</p>
-        <p id="points">Punkte: 0</p>
-    </div>
-
-    <div id="leaderboard">
-        <h3>Leaderboard</h3>
-        <!-- Leaderboard Content -->
-    </div>
-
-    <button id="retry-button" class="hidden">Neuer Versuch</button>
-</div>
+<div id="puzzle-area"></div>
+<p id="timer">Zeit: <span id="time">0</span> Sekunden</p>
+<p id="points">Punkte: <span id="score">0</span></p>
+<button id="retry-button" class="hidden">Neuer Versuch</button>
+<div id="leaderboard"></div>
 
 <script>
     let time = 0;
     let points = 0;
     let interval;
-    const ships = [
-        { length: 1, placed: false },  // 1er-Schiff
-        { length: 2, placed: false },  // 2er-Schiff
-        { length: 3, placed: false },  // 3er-Schiff
-        { length: 4, placed: false }   // 4er-Schiff
-    ];
     let totalHits = 0;
+    let ships = [
+        { name: '1er', length: 1 },
+        { name: '2er', length: 2 },
+        { name: '3er', length: 3 },
+        { name: '4er', length: 4 }
+    ];
+    let foundWords = [];
+    const englishWords = ['HUND', 'KATZE', 'Maus', 'Vogel', 'Fisch'];
+    const germanWords = ['DOG', 'CAT', 'Mouse', 'Bird', 'Fish'];
 
-    // Hide game until name is entered
-    const gameContainer = document.getElementById('game-container');
-    const startScreen = document.getElementById('start-screen');
-    const startButton = document.getElementById('start-button');
-
-    startButton.addEventListener('click', () => {
-        const playerName = document.getElementById('player-name').value;
-        if (playerName) {
-            startScreen.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
-            startRandomGame();
-        } else {
-            alert('Bitte gib deinen Namen ein!');
-        }
-    });
-
-    // Randomly select a game to start
+    // Start a random game
     function startRandomGame() {
-        const puzzleTypes = ['schiebepuzzle', 'sudoku', 'wortspiel', 'schiffeVersenken'];
-        const randomGame = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)];
-
-        if (randomGame === 'schiebepuzzle') {
-            generateSchiebepuzzle();
-        } else if (randomGame === 'sudoku') {
-            generateSudoku();
-        } else if (randomGame === 'wortspiel') {
-            generateWortspiel();
-        } else if (randomGame === 'schiffeVersenken') {
-            generateSchiffeVersenken();
-        }
-
-        // Start timer
-        startTimer();
-    }
-
-    // Timer logic
-    function startTimer() {
-        clearInterval(interval); // Reset previous timer
         time = 0;
+        points = 0;
+        totalHits = 0;
+        foundWords = [];
+        document.getElementById('score').innerText = points;
+
+        const games = [generateSudoku, generateWortspiel, generateSchiffeVersenken];
+        const randomGame = games[Math.floor(Math.random() * games.length)];
+        randomGame();
+
+        clearInterval(interval);
         interval = setInterval(() => {
             time++;
-            document.getElementById('time').innerText = `Zeit: ${time} Sekunden`;
+            document.getElementById('time').innerText = time;
         }, 1000);
-    }
-
-    // Generate Schiebepuzzle
-    function generateSchiebepuzzle() {
-        const size = 3;
-        const puzzleArea = document.createElement('div');
-        puzzleArea.classList.add('sudoku-grid');
-
-        const numbers = [...Array(size * size).keys()].map(i => i + 1);
-        const shuffled = [...numbers].sort(() => Math.random() - 0.5);
-        const emptySpace = size * size - 1; // Empty space in the last position
-
-        for (let i = 0; i < size * size; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('sudoku-cell');
-            if (i < shuffled.length) {
-                cell.innerText = shuffled[i];
-                cell.addEventListener('click', () => moveTile(cell, i));
-            } else {
-                cell.classList.add('empty');
-                cell.innerText = '';
-            }
-            puzzleArea.appendChild(cell);
-        }
-
-        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
-        document.getElementById('puzzle-area').appendChild(puzzleArea);
-    }
-
-    // Move tile in Schiebepuzzle
-    function moveTile(cell, index) {
-        // Implement Schiebepuzzle logic
-        const emptyCell = document.querySelector('.sudoku-cell.empty');
-        const emptyIndex = [...emptyCell.parentNode.children].indexOf(emptyCell);
-        const isAdjacent = Math.abs(emptyIndex - index) === 1 || Math.abs(emptyIndex - index) === 3; // Check if tiles are adjacent
-
-        if (isAdjacent) {
-            emptyCell.innerText = cell.innerText;
-            emptyCell.classList.remove('empty');
-            cell.innerText = '';
-            cell.classList.add('empty');
-        }
-        // Check for completion
-        checkSchiebepuzzleCompletion();
-    }
-
-    // Check if Schiebepuzzle is completed
-    function checkSchiebepuzzleCompletion() {
-        const cells = document.querySelectorAll('.sudoku-cell');
-        const completed = [...cells].every((cell, index) => {
-            return cell.innerText == index + 1 || cell.classList.contains('empty');
-        });
-
-        if (completed) {
-            clearInterval(interval);
-            points += (60 - time); // Score based on time taken
-            document.getElementById('points').innerText = `Punkte: ${points}`;
-            setTimeout(() => alert("Gewonnen! Schiebepuzzle gelöst!"), 100);
-        }
     }
 
     // Generate Sudoku
     function generateSudoku() {
-        // Simple static Sudoku grid for demo purposes
         const sudokuGrid = [
             [5, 3, 0, 0, 7, 0, 0, 0, 0],
             [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -312,8 +140,16 @@
 
     // Handle letter selection in Wortspiel
     function selectLetter(cell) {
-        alert(`Buchstabe ausgewählt: ${cell.innerText}`);
-        // Implement further logic for word selection or game mechanics
+        const selectedLetter = cell.innerText;
+        alert(`Buchstabe ausgewählt: ${selectedLetter}`);
+        foundWords.push(selectedLetter);
+
+        if (foundWords.length === 5) {
+            points += 10; // Punkte für das Finden von 5 Buchstaben
+            document.getElementById('score').innerText = points;
+            alert("5 Buchstaben gefunden!");
+            setTimeout(startRandomGame, 2000); // Weiterleitung zum nächsten Spiel
+        }
     }
 
     // Generate Schiffe versenken
@@ -379,18 +215,18 @@
                 points += (60 - time); // Score based on time taken
                 document.getElementById('points').innerText = `Punkte: ${points}`;
                 setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
+                setTimeout(startRandomGame, 2000); // Weiterleitung zum nächsten Spiel
             }
         } else {
             cell.classList.add('miss');
         }
     }
 
-    // Retry button event
-    document.getElementById('retry-button').addEventListener('click', function () {
-        startRandomGame(); // Restart the game
-        this.classList.add('hidden');
-    });
+    // Start button event listener
+    document.getElementById('retry-button').addEventListener('click', startRandomGame);
 
+    // Start the game on page load
+    startRandomGame();
 </script>
 
 </body>
