@@ -77,6 +77,7 @@
             grid-template-columns: repeat(9, 30px);
             grid-template-rows: repeat(9, 30px);
             gap: 2px;
+            margin-bottom: 20px;
         }
 
         .sudoku-cell {
@@ -85,6 +86,44 @@
             text-align: center;
             font-size: 16px;
             border: 1px solid black;
+        }
+
+        /* Match-3 Styling */
+        .match3-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            grid-template-rows: repeat(8, 40px);
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+
+        .match3-cell {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 20px;
+            border: 1px solid black;
+            background-color: lightblue;
+        }
+
+        .match3-cell.red {
+            background-color: red;
+        }
+
+        .match3-cell.green {
+            background-color: green;
+        }
+
+        .match3-cell.blue {
+            background-color: blue;
+        }
+
+        .match3-cell.yellow {
+            background-color: yellow;
+        }
+
+        .match3-cell.purple {
+            background-color: purple;
         }
 
         header {
@@ -112,7 +151,6 @@
 
     <div id="game-controls">
         <p id="time">Zeit: 0 Sekunden</p>
-        <p id="moves">Züge: 0/30</p>
         <p id="points">Punkte: 0</p>
     </div>
 
@@ -126,17 +164,15 @@
 
 <script>
     let time = 0;
-    let moves = 0;
     let points = 0;
     let interval;
-    const maxMoves = 30;
-    let totalHits = 0;
     const ships = [
         { length: 1, placed: false },  // 1er-Schiff
         { length: 2, placed: false },  // 2er-Schiff
         { length: 3, placed: false },  // 3er-Schiff
         { length: 4, placed: false }   // 4er-Schiff
     ];
+    let totalHits = 0;
 
     // Hide game until name is entered
     const gameContainer = document.getElementById('game-container');
@@ -183,115 +219,212 @@
         }, 1000);
     }
 
-    // Generate Schiebepuzzle (dummy function)
+    // Generate Schiebepuzzle
     function generateSchiebepuzzle() {
-        document.getElementById('puzzle-area').innerHTML = '<p>Schiebepuzzle (noch nicht implementiert)</p>';
+        const size = 3;
+        const puzzleArea = document.createElement('div');
+        puzzleArea.classList.add('sudoku-grid');
+
+        const numbers = [...Array(size * size).keys()].map(i => i + 1);
+        const shuffled = [...numbers].sort(() => Math.random() - 0.5);
+        const emptySpace = size * size - 1; // Empty space in the last position
+
+        for (let i = 0; i < size * size; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('sudoku-cell');
+            if (i < shuffled.length) {
+                cell.innerText = shuffled[i];
+                cell.addEventListener('click', () => moveTile(cell, i));
+            } else {
+                cell.classList.add('empty');
+                cell.innerText = '';
+                emptySpaceIndex = i;
+            }
+            puzzleArea.appendChild(cell);
+        }
+
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(puzzleArea);
     }
 
-    // Generate Sudoku (dummy function)
+    // Move tile in Schiebepuzzle
+    function moveTile(cell, index) {
+        // Implement Schiebepuzzle logic
+        const emptyCell = document.querySelector('.sudoku-cell.empty');
+        const emptyIndex = [...emptyCell.parentNode.children].indexOf(emptyCell);
+        const isAdjacent = Math.abs(emptyIndex - index) === 1 || Math.abs(emptyIndex - index) === 3; // Check if tiles are adjacent
+
+        if (isAdjacent) {
+            emptyCell.innerText = cell.innerText;
+            emptyCell.classList.remove('empty');
+            cell.innerText = '';
+            cell.classList.add('empty');
+        }
+        // Check for completion
+        checkSchiebepuzzleCompletion();
+    }
+
+    // Check if Schiebepuzzle is completed
+    function checkSchiebepuzzleCompletion() {
+        const cells = document.querySelectorAll('.sudoku-cell');
+        const completed = [...cells].every((cell, index) => {
+            return cell.innerText == index + 1 || cell.classList.contains('empty');
+        });
+
+        if (completed) {
+            clearInterval(interval);
+            points += (60 - time); // Score based on time taken
+            document.getElementById('points').innerText = `Punkte: ${points}`;
+            setTimeout(() => alert("Gewonnen! Schiebepuzzle gelöst!"), 100);
+        }
+    }
+
+    // Generate Sudoku
     function generateSudoku() {
-        document.getElementById('puzzle-area').innerHTML = '<p>Sudoku (noch nicht implementiert)</p>';
+        // Simple static Sudoku grid for demo purposes
+        const sudokuGrid = [
+            [5, 3, 0, 0, 7, 0, 0, 0, 0],
+            [6, 0, 0, 1, 9, 5, 0, 0, 0],
+            [0, 9, 8, 0, 0, 0, 0, 6, 0],
+            [8, 0, 0, 0, 6, 0, 0, 0, 3],
+            [4, 0, 0, 8, 0, 3, 0, 0, 1],
+            [7, 0, 0, 0, 2, 0, 0, 0, 6],
+            [0, 6, 0, 0, 0, 0, 2, 8, 0],
+            [0, 0, 0, 4, 1, 9, 0, 0, 5],
+            [0, 0, 0, 0, 8, 0, 0, 7, 9]
+        ];
+
+        const puzzleArea = document.createElement('div');
+        puzzleArea.classList.add('sudoku-grid');
+
+        sudokuGrid.forEach(row => {
+            row.forEach(num => {
+                const cell = document.createElement('div');
+                cell.classList.add('sudoku-cell');
+                cell.innerText = num === 0 ? '' : num; // Empty cell
+                puzzleArea.appendChild(cell);
+            });
+        });
+
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(puzzleArea);
     }
 
-    // Generate Match-3 (dummy function)
+    // Generate Match-3
     function generateMatch3() {
-        document.getElementById('puzzle-area').innerHTML = '<p>Match-3 (noch nicht implementiert)</p>';
+        const grid = [];
+        const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
+        const size = 8;
+
+        for (let i = 0; i < size; i++) {
+            const row = [];
+            for (let j = 0; j < size; j++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                row.push(color);
+            }
+            grid.push(row);
+        }
+
+        const match3Grid = document.createElement('div');
+        match3Grid.classList.add('match3-grid');
+
+        grid.forEach((row, rowIndex) => {
+            row.forEach((color, colIndex) => {
+                const cell = document.createElement('div');
+                cell.classList.add('match3-cell', color);
+                cell.innerText = '●'; // Symbol for match-3
+                match3Grid.appendChild(cell);
+
+                // Click event for match-3 game
+                cell.addEventListener('click', () => {
+                    checkMatch3(rowIndex, colIndex);
+                });
+            });
+        });
+
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(match3Grid);
     }
 
-    // Schiffe Versenken
+    function checkMatch3(row, col) {
+        // Check for matches and implement match-3 logic
+        alert(`Match-3 Clicked at Row: ${row}, Col: ${col}`);
+        // Implement the match-3 logic here
+    }
+
+    // Generate Schiffe versenken
     function generateSchiffeVersenken() {
+        const gridSize = 10;
         const schiffeGrid = document.createElement('div');
         schiffeGrid.id = 'schiffe-grid';
 
-        // 10x10 grid
-        for (let i = 0; i < 100; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('schiffe-cell');
-            cell.addEventListener('click', () => checkShip(cell, i));
-            schiffeGrid.appendChild(cell);
+        // Generate cells for the grid
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const cell = document.createElement('div');
+                cell.classList.add('schiffe-cell');
+                cell.addEventListener('click', () => shoot(i, j, cell));
+                schiffeGrid.appendChild(cell);
+            }
         }
 
         document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
         document.getElementById('puzzle-area').appendChild(schiffeGrid);
 
-        // Randomly place ships of different lengths
-        let shipPositions = [];
-        for (let ship of ships) {
-            placeShipRandomly(ship.length, shipPositions);
-        }
-
-        // Store ship positions
-        schiffeGrid.dataset.shipPositions = JSON.stringify(shipPositions);
+        placeShips(); // Place ships randomly
     }
 
-    function placeShipRandomly(length, shipPositions) {
-        let placed = false;
-        while (!placed) {
-            const isHorizontal = Math.random() < 0.5;
-            const startPos = Math.floor(Math.random() * 100);
+    // Place ships randomly on the grid
+    function placeShips() {
+        ships.forEach(ship => {
+            let placed = false;
+            while (!placed) {
+                const direction = Math.random() < 0.5; // true for horizontal, false for vertical
+                const startX = Math.floor(Math.random() * (10 - (direction ? ship.length : 1)));
+                const startY = Math.floor(Math.random() * (10 - (direction ? 1 : ship.length)));
 
-            let validPlacement = true;
-            let newPositions = [];
-
-            for (let i = 0; i < length; i++) {
-                let pos = isHorizontal ? startPos + i : startPos + i * 10;
-                if (pos >= 100 || (isHorizontal && Math.floor(startPos / 10) !== Math.floor(pos / 10))) {
-                    validPlacement = false;
-                    break;
+                let canPlace = true;
+                for (let i = 0; i < ship.length; i++) {
+                    if (document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.contains('hit')) {
+                        canPlace = false;
+                        break;
+                    }
                 }
-                if (shipPositions.includes(pos)) {
-                    validPlacement = false;
-                    break;
-                }
-                newPositions.push(pos);
-            }
 
-            if (validPlacement) {
-                shipPositions.push(...newPositions);
-                placed = true;
+                if (canPlace) {
+                    for (let i = 0; i < ship.length; i++) {
+                        document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.add('ship');
+                    }
+                    placed = true;
+                }
             }
-        }
+        });
     }
 
-    // Check if clicked cell contains a ship
-    function checkShip(cell, index) {
-        if (moves >= maxMoves || totalHits >= ships.length) return; // Disable further moves if game is over
-
-        const shipPositions = JSON.parse(document.getElementById('schiffe-grid').dataset.shipPositions);
+    // Shooting logic
+    function shoot(x, y, cell) {
         if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
-            return; // Cell already clicked
+            return; // Ignore already hit or missed cells
         }
 
-        moves++;
-        document.getElementById('moves').innerText = `Züge: ${moves}/${maxMoves}`;
-
-        if (shipPositions.includes(index)) {
+        if (cell.classList.contains('ship')) {
             cell.classList.add('hit');
             totalHits++;
-            points += 10; // Add points for a hit
-            document.getElementById('points').innerText = `Punkte: ${points}`;
-
-            if (totalHits === shipPositions.length) {
-                setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
+            if (totalHits === ships.reduce((sum, ship) => sum + ship.length, 0)) {
                 clearInterval(interval);
+                points += (60 - time); // Score based on time taken
+                document.getElementById('points').innerText = `Punkte: ${points}`;
+                setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
             }
         } else {
             cell.classList.add('miss');
         }
-
-        if (moves >= maxMoves && totalHits < shipPositions.length) {
-            setTimeout(() => {
-                alert("Verloren! Keine Züge mehr!");
-                document.getElementById('retry-button').classList.remove('hidden'); // Show retry button
-            }, 100);
-            clearInterval(interval);
-        }
     }
 
-    // Add event listener to the retry button to restart the game
+    // Retry button event
     document.getElementById('retry-button').addEventListener('click', function () {
         startRandomGame(); // Restart the game
-        document.getElementById('retry-button').classList.add('hidden');
+        this.classList.add('hidden');
     });
 
 </script>
