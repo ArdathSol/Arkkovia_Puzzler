@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Game - Schiffe Versenken</title>
+    <title>Unendliches Puzzle Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +39,14 @@
             text-align: center;
         }
 
+        #puzzle-area {
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
         /* Schiffe versenken Styling */
         #schiffe-grid {
             display: grid;
@@ -63,6 +71,22 @@
             background-color: white;
         }
 
+        /* Sudoku Styling */
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 30px);
+            grid-template-rows: repeat(9, 30px);
+            gap: 2px;
+        }
+
+        .sudoku-cell {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            font-size: 16px;
+            border: 1px solid black;
+        }
+
         header {
             font-size: 24px;
             margin-bottom: 10px;
@@ -74,10 +98,16 @@
 
 <header>Made by Arkkovia</header>
 
-<h1>Schiffe Versenken</h1>
+<h1>Unendliches Puzzle Game</h1>
 
-<div id="game-container">
-    <!-- Game grid for Schiffe Versenken -->
+<div id="start-screen">
+    <h2>Bitte gib deinen Namen ein</h2>
+    <input type="text" id="player-name" placeholder="Dein Name">
+    <button id="start-button">Spiel starten</button>
+</div>
+
+<div id="game-container" class="hidden">
+    <!-- Puzzle area where random games will appear -->
     <div id="puzzle-area"></div>
 
     <div id="game-controls">
@@ -90,6 +120,8 @@
         <h3>Leaderboard</h3>
         <!-- Leaderboard Content -->
     </div>
+
+    <button id="retry-button" class="hidden">Neuer Versuch</button>
 </div>
 
 <script>
@@ -99,26 +131,74 @@
     let interval;
     const maxMoves = 30;
     let totalHits = 0;
-    const maxShips = 5;
+    const ships = [
+        { length: 1, placed: false },  // 1er-Schiff
+        { length: 2, placed: false },  // 2er-Schiff
+        { length: 3, placed: false },  // 3er-Schiff
+        { length: 4, placed: false }   // 4er-Schiff
+    ];
 
-    function startGame() {
-        clearInterval(interval); // Reset timer
+    // Hide game until name is entered
+    const gameContainer = document.getElementById('game-container');
+    const startScreen = document.getElementById('start-screen');
+    const startButton = document.getElementById('start-button');
+
+    startButton.addEventListener('click', () => {
+        const playerName = document.getElementById('player-name').value;
+        if (playerName) {
+            startScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            startRandomGame();
+        } else {
+            alert('Bitte gib deinen Namen ein!');
+        }
+    });
+
+    // Randomly select a game to start
+    function startRandomGame() {
+        const puzzleTypes = ['schiebepuzzle', 'sudoku', 'match3', 'schiffeVersenken'];
+        const randomGame = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)];
+
+        if (randomGame === 'schiebepuzzle') {
+            generateSchiebepuzzle();
+        } else if (randomGame === 'sudoku') {
+            generateSudoku();
+        } else if (randomGame === 'match3') {
+            generateMatch3();
+        } else if (randomGame === 'schiffeVersenken') {
+            generateSchiffeVersenken();
+        }
+
+        // Start timer
+        startTimer();
+    }
+
+    // Timer logic
+    function startTimer() {
+        clearInterval(interval); // Reset previous timer
         time = 0;
-        moves = 0;
-        totalHits = 0;
-        points = 0;
-        document.getElementById('time').innerText = `Zeit: 0 Sekunden`;
-        document.getElementById('moves').innerText = `Züge: 0/${maxMoves}`;
-        document.getElementById('points').innerText = `Punkte: 0`;
-
-        generateSchiffeVersenken();
-
         interval = setInterval(() => {
             time++;
             document.getElementById('time').innerText = `Zeit: ${time} Sekunden`;
         }, 1000);
     }
 
+    // Generate Schiebepuzzle (dummy function)
+    function generateSchiebepuzzle() {
+        document.getElementById('puzzle-area').innerHTML = '<p>Schiebepuzzle (noch nicht implementiert)</p>';
+    }
+
+    // Generate Sudoku (dummy function)
+    function generateSudoku() {
+        document.getElementById('puzzle-area').innerHTML = '<p>Sudoku (noch nicht implementiert)</p>';
+    }
+
+    // Generate Match-3 (dummy function)
+    function generateMatch3() {
+        document.getElementById('puzzle-area').innerHTML = '<p>Match-3 (noch nicht implementiert)</p>';
+    }
+
+    // Schiffe Versenken
     function generateSchiffeVersenken() {
         const schiffeGrid = document.createElement('div');
         schiffeGrid.id = 'schiffe-grid';
@@ -134,22 +214,48 @@
         document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
         document.getElementById('puzzle-area').appendChild(schiffeGrid);
 
-        // Randomly place 5 ships
+        // Randomly place ships of different lengths
         let shipPositions = [];
-        while (shipPositions.length < maxShips) {
-            const pos = Math.floor(Math.random() * 100);
-            if (!shipPositions.includes(pos)) {
-                shipPositions.push(pos);
-            }
+        for (let ship of ships) {
+            placeShipRandomly(ship.length, shipPositions);
         }
 
         // Store ship positions
         schiffeGrid.dataset.shipPositions = JSON.stringify(shipPositions);
     }
 
+    function placeShipRandomly(length, shipPositions) {
+        let placed = false;
+        while (!placed) {
+            const isHorizontal = Math.random() < 0.5;
+            const startPos = Math.floor(Math.random() * 100);
+
+            let validPlacement = true;
+            let newPositions = [];
+
+            for (let i = 0; i < length; i++) {
+                let pos = isHorizontal ? startPos + i : startPos + i * 10;
+                if (pos >= 100 || (isHorizontal && Math.floor(startPos / 10) !== Math.floor(pos / 10))) {
+                    validPlacement = false;
+                    break;
+                }
+                if (shipPositions.includes(pos)) {
+                    validPlacement = false;
+                    break;
+                }
+                newPositions.push(pos);
+            }
+
+            if (validPlacement) {
+                shipPositions.push(...newPositions);
+                placed = true;
+            }
+        }
+    }
+
     // Check if clicked cell contains a ship
     function checkShip(cell, index) {
-        if (moves >= maxMoves || totalHits >= maxShips) return; // Disable further moves if game is over
+        if (moves >= maxMoves || totalHits >= ships.length) return; // Disable further moves if game is over
 
         const shipPositions = JSON.parse(document.getElementById('schiffe-grid').dataset.shipPositions);
         if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
@@ -165,7 +271,7 @@
             points += 10; // Add points for a hit
             document.getElementById('points').innerText = `Punkte: ${points}`;
 
-            if (totalHits === maxShips) {
+            if (totalHits === shipPositions.length) {
                 setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
                 clearInterval(interval);
             }
@@ -173,14 +279,20 @@
             cell.classList.add('miss');
         }
 
-        if (moves >= maxMoves && totalHits < maxShips) {
-            setTimeout(() => alert("Verloren! Keine Züge mehr!"), 100);
+        if (moves >= maxMoves && totalHits < shipPositions.length) {
+            setTimeout(() => {
+                alert("Verloren! Keine Züge mehr!");
+                document.getElementById('retry-button').classList.remove('hidden'); // Show retry button
+            }, 100);
             clearInterval(interval);
         }
     }
 
-    // Start the game when the page loads
-    startGame();
+    // Add event listener to the retry button to restart the game
+    document.getElementById('retry-button').addEventListener('click', function () {
+        startRandomGame(); // Restart the game
+        document.getElementById('retry-button').classList.add('hidden');
+    });
 
 </script>
 
