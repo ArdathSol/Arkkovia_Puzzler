@@ -3,399 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle-Spiel mit Leaderboard und mehr Puzzle-Typen</title>
+    <title>Unendliches Puzzle Game</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #game-container {
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        #game-container {
+
+        #game-controls {
             margin-top: 20px;
-            display: grid;
-            gap: 2px;
         }
-        .tile {
-            width: 100px;
-            height: 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: lightblue;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
         }
+
         #leaderboard {
             margin-top: 20px;
-            border: 1px solid #000;
-            padding: 10px;
-            width: 300px;
-        }
-        #leaderboard ul {
-            list-style: none;
-            padding: 0;
-        }
-        #leaderboard li {
-            display: flex;
-            justify-content: space-between;
-        }
-        /* Styles für Sudoku und Match-3 */
-        #sudoku-grid, #match3-grid {
-            display: grid;
-            gap: 2px;
-        }
-        #sudoku-grid .cell, #match3-grid .cell {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            border: 1px solid black;
-        }
-        .input-cell {
-            background-color: #f0f0f0;
-            cursor: text;
             text-align: center;
         }
-        .match3-cell {
-            width: 60px;
-            height: 60px;
-            background-color: lightcoral;
-            font-size: 18px;
-        }
-        /* Start-Button und Namenseingabe */
-        #start-menu {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+
+        #puzzle-area {
             margin-top: 20px;
         }
-        #start-button {
-            margin-top: 10px;
+
+        .hidden {
+            display: none;
+        }
+
+        /* Schiffe versenken Styling */
+        #schiffe-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(10, 50px);
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+
+        .schiffe-cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            background-color: lightgray;
+        }
+
+        .hit {
+            background-color: red;
+        }
+
+        .miss {
+            background-color: white;
+        }
+
+        /* Sudoku Styling */
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 30px);
+            grid-template-rows: repeat(9, 30px);
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+
+        .sudoku-cell {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            font-size: 16px;
+            border: 1px solid black;
+        }
+
+        /* Wortspiel Styling */
+        .wortspiel-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 40px);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .wortspiel-cell {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 20px;
+            border: 1px solid black;
+            background-color: lightgreen;
+            cursor: pointer;
+        }
+
+        header {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>Puzzle-Spiel</h1>
-    <div id="start-menu">
-        <input type="text" id="player-name" placeholder="Gib deinen Namen ein" />
-        <button id="start-button">Spiel starten</button>
-    </div>
-    <div id="game-container" style="display: none;"></div>
-    <div id="timer">Zeit: <span id="time">0</span> Sekunden</div>
-    <div id="score">Punkte: <span id="points">0</span></div>
 
-    <h2>Leaderboard</h2>
+<header>Made by Arkkovia</header>
+
+<h1>Unendliches Puzzle Game</h1>
+
+<div id="start-screen">
+    <h2>Bitte gib deinen Namen ein</h2>
+    <input type="text" id="player-name" placeholder="Dein Name">
+    <button id="start-button">Spiel starten</button>
+</div>
+
+<div id="game-container" class="hidden">
+    <div id="puzzle-area"></div>
+
+    <div id="game-controls">
+        <p id="time">Zeit: 0 Sekunden</p>
+        <p id="points">Punkte: 0</p>
+    </div>
+
     <div id="leaderboard">
-        <ul id="leaderboard-list"></ul>
+        <h3>Leaderboard</h3>
+        <!-- Leaderboard Content -->
     </div>
-    
-    <script>
-        let gridSize = 3;  // Startgröße des Schiebe-Puzzles (3x3)
-        let level = 1;      // Level des Spiels
-        let puzzleTypes = ['sliding', 'sudoku', 'match3']; // Puzzle-Typen
-        let points = 0;
-        let timer;
-        let timeTaken = 0;
-        let currentPuzzle = '';
 
-        // Startet das Spiel
-        document.getElementById('start-button').addEventListener('click', function() {
-            const playerName = document.getElementById('player-name').value.trim();
-            if (playerName === '') {
-                alert('Bitte gib deinen Namen ein.');
-                return;
+    <button id="retry-button" class="hidden">Neuer Versuch</button>
+</div>
+
+<script>
+    let time = 0;
+    let points = 0;
+    let interval;
+    const ships = [
+        { length: 1, placed: false },  // 1er-Schiff
+        { length: 2, placed: false },  // 2er-Schiff
+        { length: 3, placed: false },  // 3er-Schiff
+        { length: 4, placed: false }   // 4er-Schiff
+    ];
+    let totalHits = 0;
+
+    // Hide game until name is entered
+    const gameContainer = document.getElementById('game-container');
+    const startScreen = document.getElementById('start-screen');
+    const startButton = document.getElementById('start-button');
+
+    startButton.addEventListener('click', () => {
+        const playerName = document.getElementById('player-name').value;
+        if (playerName) {
+            startScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            startRandomGame();
+        } else {
+            alert('Bitte gib deinen Namen ein!');
+        }
+    });
+
+    // Randomly select a game to start
+    function startRandomGame() {
+        const puzzleTypes = ['schiebepuzzle', 'sudoku', 'wortspiel', 'schiffeVersenken'];
+        const randomGame = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)];
+
+        if (randomGame === 'schiebepuzzle') {
+            generateSchiebepuzzle();
+        } else if (randomGame === 'sudoku') {
+            generateSudoku();
+        } else if (randomGame === 'wortspiel') {
+            generateWortspiel();
+        } else if (randomGame === 'schiffeVersenken') {
+            generateSchiffeVersenken();
+        }
+
+        // Start timer
+        startTimer();
+    }
+
+    // Timer logic
+    function startTimer() {
+        clearInterval(interval); // Reset previous timer
+        time = 0;
+        interval = setInterval(() => {
+            time++;
+            document.getElementById('time').innerText = `Zeit: ${time} Sekunden`;
+        }, 1000);
+    }
+
+    // Generate Schiebepuzzle
+    function generateSchiebepuzzle() {
+        const size = 3;
+        const puzzleArea = document.createElement('div');
+        puzzleArea.classList.add('sudoku-grid');
+
+        const numbers = [...Array(size * size).keys()].map(i => i + 1);
+        const shuffled = [...numbers].sort(() => Math.random() - 0.5);
+        const emptySpace = size * size - 1; // Empty space in the last position
+
+        for (let i = 0; i < size * size; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('sudoku-cell');
+            if (i < shuffled.length) {
+                cell.innerText = shuffled[i];
+                cell.addEventListener('click', () => moveTile(cell, i));
+            } else {
+                cell.classList.add('empty');
+                cell.innerText = '';
             }
-            startGame(playerName);
+            puzzleArea.appendChild(cell);
+        }
+
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(puzzleArea);
+    }
+
+    // Move tile in Schiebepuzzle
+    function moveTile(cell, index) {
+        // Implement Schiebepuzzle logic
+        const emptyCell = document.querySelector('.sudoku-cell.empty');
+        const emptyIndex = [...emptyCell.parentNode.children].indexOf(emptyCell);
+        const isAdjacent = Math.abs(emptyIndex - index) === 1 || Math.abs(emptyIndex - index) === 3; // Check if tiles are adjacent
+
+        if (isAdjacent) {
+            emptyCell.innerText = cell.innerText;
+            emptyCell.classList.remove('empty');
+            cell.innerText = '';
+            cell.classList.add('empty');
+        }
+        // Check for completion
+        checkSchiebepuzzleCompletion();
+    }
+
+    // Check if Schiebepuzzle is completed
+    function checkSchiebepuzzleCompletion() {
+        const cells = document.querySelectorAll('.sudoku-cell');
+        const completed = [...cells].every((cell, index) => {
+            return cell.innerText == index + 1 || cell.classList.contains('empty');
         });
 
-        function loadLeaderboard() {
-            const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            const leaderboardList = document.getElementById('leaderboard-list');
-            leaderboardList.innerHTML = '';
-            leaderboard.forEach((entry) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${entry.name}</span><span>${entry.score}</span>`;
-                leaderboardList.appendChild(li);
+        if (completed) {
+            clearInterval(interval);
+            points += (60 - time); // Score based on time taken
+            document.getElementById('points').innerText = `Punkte: ${points}`;
+            setTimeout(() => alert("Gewonnen! Schiebepuzzle gelöst!"), 100);
+        }
+    }
+
+    // Generate Sudoku
+    function generateSudoku() {
+        // Simple static Sudoku grid for demo purposes
+        const sudokuGrid = [
+            [5, 3, 0, 0, 7, 0, 0, 0, 0],
+            [6, 0, 0, 1, 9, 5, 0, 0, 0],
+            [0, 9, 8, 0, 0, 0, 0, 6, 0],
+            [8, 0, 0, 0, 6, 0, 0, 0, 3],
+            [4, 0, 0, 8, 0, 3, 0, 0, 1],
+            [7, 0, 0, 0, 2, 0, 0, 0, 6],
+            [0, 6, 0, 0, 0, 0, 2, 8, 0],
+            [0, 0, 0, 4, 1, 9, 0, 0, 5],
+            [0, 0, 0, 0, 8, 0, 0, 7, 9]
+        ];
+
+        const puzzleArea = document.createElement('div');
+        puzzleArea.classList.add('sudoku-grid');
+
+        sudokuGrid.forEach((row, rowIndex) => {
+            row.forEach((num, colIndex) => {
+                const cell = document.createElement('div');
+                cell.classList.add('sudoku-cell');
+                cell.innerText = num === 0 ? '' : num; // Empty cell
+                cell.contentEditable = num === 0; // Make it editable only if it's empty
+                puzzleArea.appendChild(cell);
             });
-        }
+        });
 
-        function saveToLeaderboard(name, score) {
-            let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            leaderboard.push({ name, score });
-            leaderboard.sort((a, b) => b.score - a.score); // Sortieren nach Punkten
-            leaderboard = leaderboard.slice(0, 5); // Nur die Top 5 speichern
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            loadLeaderboard();
-        }
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(puzzleArea);
+    }
 
-        function startGame(playerName) {
-            document.getElementById('start-menu').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            points = 0;  // Punkte zurücksetzen
-            level = 1;   // Level zurücksetzen
-            startNewLevel(playerName);
-        }
+    // Generate Wortspiel
+    function generateWortspiel() {
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const gridSize = 5;
+        const wortGrid = document.createElement('div');
+        wortGrid.classList.add('wortspiel-grid');
 
-        function startNewLevel(playerName) {
-            timeTaken = 0;
-            document.getElementById('time').textContent = timeTaken;
-            timer = setInterval(() => {
-                timeTaken++;
-                document.getElementById('time').textContent = timeTaken;
-            }, 1000);
-
-            // Alle 10 Level schwieriger machen
-            if (level % 10 === 0) {
-                gridSize++;
-            }
-
-            generatePuzzle();
-            level++;
-        }
-
-        function generatePuzzle() {
-            currentPuzzle = puzzleTypes[Math.floor(Math.random() * puzzleTypes.length)]; // Zufällig Puzzle-Typ auswählen
-            const container = document.getElementById('game-container');
-            container.innerHTML = '';
-
-            if (currentPuzzle === 'sliding') {
-                generateSlidingPuzzle(gridSize);
-            } else if (currentPuzzle === 'sudoku') {
-                generateSudokuPuzzle();
-            } else if (currentPuzzle === 'match3') {
-                generateMatch3Puzzle();
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const cell = document.createElement('div');
+                cell.classList.add('wortspiel-cell');
+                cell.innerText = letters.charAt(Math.floor(Math.random() * letters.length));
+                cell.addEventListener('click', () => selectLetter(cell));
+                wortGrid.appendChild(cell);
             }
         }
 
-        /** Schiebe-Puzzle **/
-        function generateSlidingPuzzle(size) {
-            let grid = [];
-            let numbers = [];
-            for (let i = 0; i < size * size - 1; i++) {
-                numbers.push(i + 1);
-            }
-            numbers.push(null);  // Das letzte Feld ist leer
-            numbers.sort(() => Math.random() - 0.5);  // Mische das Array
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(wortGrid);
+    }
 
-            for (let i = 0; i < size; i++) {
-                grid.push(numbers.slice(i * size, i * size + size));
-            }
-            renderSlidingGrid(grid);
-        }
+    // Handle letter selection in Wortspiel
+    function selectLetter(cell) {
+        alert(`Buchstabe ausgewählt: ${cell.innerText}`);
+        // Implement further logic for word selection or game mechanics
+    }
 
-        function renderSlidingGrid(grid) {
-            const container = document.getElementById('game-container');
-            container.style.gridTemplateColumns = `repeat(${grid.length}, 100px)`;
-            container.style.gridTemplateRows = `repeat(${grid.length}, 100px)`;
-            container.innerHTML = ''; // Leeren des Containers für das neue Grid
-            grid.forEach((row, rowIndex) => {
-                row.forEach((cell, colIndex) => {
-                    const tile = document.createElement('div');
-                    tile.classList.add('tile');
-                    if (cell !== null) {
-                        tile.textContent = cell;
-                        tile.addEventListener('click', () => moveTile(rowIndex, colIndex, grid));
-                    } else {
-                        tile.style.backgroundColor = 'white';
-                    }
-                    container.appendChild(tile);
-                });
-            });
-        }
+    // Generate Schiffe versenken
+    function generateSchiffeVersenken() {
+        const gridSize = 10;
+        const schiffeGrid = document.createElement('div');
+        schiffeGrid.id = 'schiffe-grid';
 
-        function moveTile(row, col, grid) {
-            const emptyTile = findEmptyTile(grid);
-            const [emptyRow, emptyCol] = emptyTile;
-            const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol)) === 1;
-            if (isAdjacent) {
-                grid[emptyRow][emptyCol] = grid[row][col];
-                grid[row][col] = null;
-                renderSlidingGrid(grid);
-                checkWin(grid);
+        // Generate cells for the grid
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const cell = document.createElement('div');
+                cell.classList.add('schiffe-cell');
+                cell.addEventListener('click', () => shoot(i, j, cell));
+                schiffeGrid.appendChild(cell);
             }
         }
 
-        function findEmptyTile(grid) {
-            for (let row = 0; row < grid.length; row++) {
-                for (let col = 0; col < grid[row].length; col++) {
-                    if (grid[row][col] === null) return [row, col];
-                }
-            }
-        }
+        document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
+        document.getElementById('puzzle-area').appendChild(schiffeGrid);
 
-        function checkWin(grid) {
-            let won = true;
-            let counter = 1;
-            for (let row = 0; row < gridSize; row++) {
-                for (let col = 0; col < gridSize; col++) {
-                    if (row === gridSize - 1 && col === gridSize - 1) continue;
-                    if (grid[row][col] !== counter++) {
-                        won = false;
+        placeShips(); // Place ships randomly
+    }
+
+    // Place ships randomly on the grid
+    function placeShips() {
+        ships.forEach(ship => {
+            let placed = false;
+            while (!placed) {
+                const direction = Math.random() < 0.5; // true for horizontal, false for vertical
+                const startX = Math.floor(Math.random() * (10 - (direction ? ship.length : 1)));
+                const startY = Math.floor(Math.random() * (10 - (direction ? 1 : ship.length)));
+
+                let canPlace = true;
+                for (let i = 0; i < ship.length; i++) {
+                    if (document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.contains('hit')) {
+                        canPlace = false;
                         break;
                     }
                 }
+
+                if (canPlace) {
+                    for (let i = 0; i < ship.length; i++) {
+                        document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.add('ship');
+                    }
+                    placed = true;
+                }
             }
-            if (won) {
-                clearInterval(timer);
-                const playerName = prompt("Du hast gewonnen! Gib deinen Namen für das Leaderboard ein:");
-                saveToLeaderboard(playerName, points);
-                points += Math.max(100 - timeTaken, 0); // Punkte basierend auf der Zeit hinzufügen
-                startNewLevel(playerName); // Nächste Runde starten
+        });
+    }
+
+    // Shooting logic
+    function shoot(x, y, cell) {
+        if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
+            return; // Ignore already hit or missed cells
+        }
+
+        if (cell.classList.contains('ship')) {
+            cell.classList.add('hit');
+            totalHits++;
+            if (totalHits === ships.reduce((sum, ship) => sum + ship.length, 0)) {
+                clearInterval(interval);
+                points += (60 - time); // Score based on time taken
+                document.getElementById('points').innerText = `Punkte: ${points}`;
+                setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
             }
+        } else {
+            cell.classList.add('miss');
         }
+    }
 
-        /** Sudoku Puzzle **/
-        function generateSudokuPuzzle() {
-            const container = document.getElementById('game-container');
-            const sudokuGrid = document.createElement('div');
-            sudokuGrid.id = 'sudoku-grid';
-            sudokuGrid.style.gridTemplateColumns = 'repeat(9, 50px)';
-            sudokuGrid.style.gridTemplateRows = 'repeat(9, 50px)';
-            container.appendChild(sudokuGrid);
+    // Retry button event
+    document.getElementById('retry-button').addEventListener('click', function () {
+        startRandomGame(); // Restart the game
+        this.classList.add('hidden');
+    });
 
-            // Beispiel-Sudoku (feste Lösung)
-            const sudokuExample = [
-                [5, 3, null, null, 7, null, null, null, null],
-                [6, null, null, 1, 9, 5, null, null, null],
-                [null, 9, 8, null, null, null, null, 6, null],
-                [8, null, null, null, 6, null, null, null, 3],
-                [4, null, null, 8, null, 3, null, null, 1],
-                [7, null, null, null, 2, null, null, null, 6],
-                [null, 6, null, null, null, null, 2, 8, null],
-                [null, null, null, 4, 1, 9, null, null, 5],
-                [null, null, null, null, 8, null, null, 7, 9]
-            ];
+</script>
 
-            sudokuExample.forEach((row, rowIndex) => {
-                row.forEach((cell, colIndex) => {
-                    const cellElement = document.createElement('div');
-                    cellElement.classList.add('cell');
-                    if (cell === null) {
-                        const input = document.createElement('input');
-                        input.classList.add('input-cell');
-                        input.type = 'text';
-                        input.maxLength = 1;
-                        cellElement.appendChild(input);
-                    } else {
-                        cellElement.textContent = cell;
-                    }
-                    sudokuGrid.appendChild(cellElement);
-                });
-            });
-
-            // Überprüfe die Gewinnbedingungen
-            const checkSudokuWin = () => {
-                const inputs = document.querySelectorAll('.input-cell');
-                let completed = true;
-                let solution = [];
-                inputs.forEach(input => {
-                    if (input.value === '') {
-                        completed = false;
-                    } else {
-                        solution.push(parseInt(input.value));
-                    }
-                });
-                if (completed) {
-                    // Einfache Gewinnlogik: Überprüfe nur, ob die Eingaben 1-9 enthalten
-                    const isCorrect = solution.length === 81 && new Set(solution).size === 9;
-                    if (isCorrect) {
-                        clearInterval(timer);
-                        const playerName = prompt("Du hast gewonnen! Gib deinen Namen für das Leaderboard ein:");
-                        saveToLeaderboard(playerName, points);
-                        points += Math.max(100 - timeTaken, 0); // Punkte basierend auf der Zeit hinzufügen
-                        startNewLevel(playerName); // Nächste Runde starten
-                    } else {
-                        alert("Das Sudoku ist nicht korrekt!");
-                    }
-                } else {
-                    alert("Bitte vervollständige das Sudoku!");
-                }
-            };
-
-            // Button für die Gewinnüberprüfung
-            const winButton = document.createElement('button');
-            winButton.textContent = 'Überprüfen';
-            winButton.addEventListener('click', checkSudokuWin);
-            container.appendChild(winButton);
-        }
-
-        /** Match-3 Puzzle **/
-        function generateMatch3Puzzle() {
-            const container = document.getElementById('game-container');
-            const match3Grid = document.createElement('div');
-            match3Grid.id = 'match3-grid';
-            match3Grid.style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
-            match3Grid.style.gridTemplateRows = `repeat(${gridSize}, 60px)`;
-            container.appendChild(match3Grid);
-
-            const colors = ['red', 'blue', 'green', 'yellow', 'purple'];
-            let grid = [];
-
-            // Generiere ein zufälliges Grid für Match-3
-            for (let row = 0; row < gridSize; row++) {
-                let gridRow = [];
-                for (let col = 0; col < gridSize; col++) {
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    const cell = document.createElement('div');
-                    cell.classList.add('match3-cell');
-                    cell.style.backgroundColor = color;
-                    match3Grid.appendChild(cell);
-                    gridRow.push(color);
-                }
-                grid.push(gridRow);
-            }
-
-            // Logik für das Erkennen von Matches
-            const checkForMatches = () => {
-                // Überprüfe horizontale und vertikale Matches
-                for (let row = 0; row < gridSize; row++) {
-                    for (let col = 0; col < gridSize - 2; col++) {
-                        if (grid[row][col] === grid[row][col + 1] && grid[row][col] === grid[row][col + 2]) {
-                            // Wenn ein Match gefunden wird, setze die Punkte
-                            points += 10;
-                            document.getElementById('points').textContent = points;
-                            // Zerstöre die Kacheln
-                            grid[row][col] = grid[row][col + 1] = grid[row][col + 2] = null;
-                        }
-                    }
-                }
-                // Vertikale Überprüfung
-                for (let col = 0; col < gridSize; col++) {
-                    for (let row = 0; row < gridSize - 2; row++) {
-                        if (grid[row][col] === grid[row + 1][col] && grid[row][col] === grid[row + 2][col]) {
-                            points += 10;
-                            document.getElementById('points').textContent = points;
-                            grid[row][col] = grid[row + 1][col] = grid[row + 2][col] = null;
-                        }
-                    }
-                }
-            };
-
-            // Überprüfe Matches, wenn der Spieler klickt
-            match3Grid.addEventListener('click', () => {
-                checkForMatches();
-                renderMatch3Grid(grid);
-            });
-        }
-
-        function renderMatch3Grid(grid) {
-            const match3Grid = document.getElementById('match3-grid');
-            match3Grid.innerHTML = ''; // Lösche vorherige Zellen
-            grid.forEach(row => {
-                row.forEach(cellColor => {
-                    const cell = document.createElement('div');
-                    cell.classList.add('match3-cell');
-                    cell.style.backgroundColor = cellColor || 'white'; // Setze Farbe oder leere Zelle
-                    match3Grid.appendChild(cell);
-                });
-            });
-        }
-
-        loadLeaderboard();
-    </script>
 </body>
 </html>
