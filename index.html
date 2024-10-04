@@ -9,12 +9,12 @@
             font-family: Arial, sans-serif;
             text-align: center;
         }
-        .sudoku-grid, .wortspiel-grid, .schiffe-grid {
+        .sudoku-grid {
             display: grid;
             grid-template-columns: repeat(9, 40px);
             margin: 20px auto;
         }
-        .sudoku-cell, .wortspiel-cell, .schiffe-cell {
+        .sudoku-cell {
             border: 1px solid #000;
             width: 40px;
             height: 40px;
@@ -23,21 +23,40 @@
             justify-content: center;
             font-size: 20px;
         }
-        .schiffe-cell {
-            background-color: lightblue;
+        /* Clear separation for 3x3 grids */
+        .sudoku-cell:nth-child(3n+1) {
+            border-left: 2px solid black;
+        }
+        .sudoku-cell:nth-child(3n) {
+            border-right: 2px solid black;
+        }
+        .sudoku-cell:nth-child(n+1):nth-child(-n+9) {
+            border-top: 2px solid black;
+        }
+        .sudoku-cell:nth-child(n+73) {
+            border-bottom: 2px solid black;
+        }
+        .farben-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 60px);
+            margin: 20px auto;
+        }
+        .farben-cell {
+            width: 60px;
+            height: 60px;
+            border: 1px solid black;
             cursor: pointer;
-        }
-        .hit {
-            background-color: red;
-        }
-        .miss {
-            background-color: lightgrey;
         }
         #puzzle-area {
             margin: 20px;
         }
         #leaderboard {
             margin-top: 20px;
+        }
+        button {
+            padding: 10px;
+            margin: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -49,7 +68,6 @@
 <div id="puzzle-area"></div>
 <p id="timer">Zeit: <span id="time">0</span> Sekunden</p>
 <p id="points">Punkte: <span id="score">0</span></p>
-<button id="retry-button" class="hidden">Neuer Versuch</button>
 <div id="leaderboard"></div>
 
 <script>
@@ -63,19 +81,15 @@
         { name: '3er', length: 3 },
         { name: '4er', length: 4 }
     ];
-    let foundWords = [];
-    const englishWords = ['HUND', 'KATZE', 'Maus', 'Vogel', 'Fisch'];
-    const germanWords = ['DOG', 'CAT', 'Mouse', 'Bird', 'Fish'];
 
     // Start a random game
     function startRandomGame() {
         time = 0;
         points = 0;
         totalHits = 0;
-        foundWords = [];
         document.getElementById('score').innerText = points;
 
-        const games = [generateSudoku, generateWortspiel, generateSchiffeVersenken];
+        const games = [generateSudoku, generateFarbenRätsel, generateSchiffeVersenken];
         const randomGame = games[Math.floor(Math.random() * games.length)];
         randomGame();
 
@@ -109,6 +123,7 @@
                 cell.classList.add('sudoku-cell');
                 cell.innerText = num === 0 ? '' : num; // Empty cell
                 cell.contentEditable = num === 0; // Make it editable only if it's empty
+                cell.addEventListener('input', () => checkSudoku(cell, rowIndex, colIndex, sudokuGrid));
                 puzzleArea.appendChild(cell);
             });
         });
@@ -117,39 +132,59 @@
         document.getElementById('puzzle-area').appendChild(puzzleArea);
     }
 
-    // Generate Wortspiel
-    function generateWortspiel() {
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const gridSize = 5;
-        const wortGrid = document.createElement('div');
-        wortGrid.classList.add('wortspiel-grid');
+    // Check if Sudoku input is correct
+    function checkSudoku(cell, row, col, grid) {
+        const inputValue = parseInt(cell.innerText);
+        if (inputValue === grid[row][col]) {
+            cell.style.color = 'green';
+            points += 10;
+        } else {
+            cell.style.color = 'red';
+            points -= 5;
+        }
+        document.getElementById('score').innerText = points;
+        if (checkSudokuComplete(grid)) {
+            setTimeout(startRandomGame, 2000);
+        }
+    }
 
-        for (let i = 0; i < gridSize; i++) {
-            for (let j = 0; j < gridSize; j++) {
-                const cell = document.createElement('div');
-                cell.classList.add('wortspiel-cell');
-                cell.innerText = letters.charAt(Math.floor(Math.random() * letters.length));
-                cell.addEventListener('click', () => selectLetter(cell));
-                wortGrid.appendChild(cell);
-            }
+    function checkSudokuComplete(grid) {
+        return [...document.querySelectorAll('.sudoku-cell')].every(cell => cell.innerText !== '');
+    }
+
+    // Generate Farbenrätsel
+    function generateFarbenRätsel() {
+        const colors = ['red', 'green', 'blue', 'yellow'];
+        const puzzleArea = document.createElement('div');
+        puzzleArea.classList.add('farben-grid');
+
+        let sequence = [];
+        let currentIndex = 0;
+
+        for (let i = 0; i < 4; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('farben-cell');
+            cell.style.backgroundColor = colors[i];
+
+            cell.addEventListener('click', () => {
+                if (colors[currentIndex] === cell.style.backgroundColor) {
+                    currentIndex++;
+                    points += 10;
+                } else {
+                    points -= 10;
+                }
+
+                if (currentIndex === colors.length) {
+                    setTimeout(startRandomGame, 2000);
+                }
+
+                document.getElementById('score').innerText = points;
+            });
+            puzzleArea.appendChild(cell);
         }
 
         document.getElementById('puzzle-area').innerHTML = ''; // Clear previous game
-        document.getElementById('puzzle-area').appendChild(wortGrid);
-    }
-
-    // Handle letter selection in Wortspiel
-    function selectLetter(cell) {
-        const selectedLetter = cell.innerText;
-        alert(`Buchstabe ausgewählt: ${selectedLetter}`);
-        foundWords.push(selectedLetter);
-
-        if (foundWords.length === 5) {
-            points += 10; // Punkte für das Finden von 5 Buchstaben
-            document.getElementById('score').innerText = points;
-            alert("5 Buchstaben gefunden!");
-            setTimeout(startRandomGame, 2000); // Weiterleitung zum nächsten Spiel
-        }
+        document.getElementById('puzzle-area').appendChild(puzzleArea);
     }
 
     // Generate Schiffe versenken
@@ -185,7 +220,7 @@
 
                 let canPlace = true;
                 for (let i = 0; i < ship.length; i++) {
-                    if (document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.contains('hit')) {
+                    if (document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0) + (direction ? 0 : i * 10)})`).classList.contains('ship')) {
                         canPlace = false;
                         break;
                     }
@@ -193,7 +228,7 @@
 
                 if (canPlace) {
                     for (let i = 0; i < ship.length; i++) {
-                        document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0)})`).classList.add('ship');
+                        document.querySelector(`#schiffe-grid div:nth-child(${(startY * 10) + startX + (direction ? i : 0) + (direction ? 0 : i * 10)})`).classList.add('ship');
                     }
                     placed = true;
                 }
@@ -201,24 +236,20 @@
         });
     }
 
-    // Shooting logic
     function shoot(x, y, cell) {
-        if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
-            return; // Ignore already hit or missed cells
+        if (cell.classList.contains('ship')) {
+            cell.style.backgroundColor = 'red';
+            points += 20;
+            totalHits++;
+        } else {
+            cell.style.backgroundColor = 'blue';
         }
 
-        if (cell.classList.contains('ship')) {
-            cell.classList.add('hit');
-            totalHits++;
-            if (totalHits === ships.reduce((sum, ship) => sum + ship.length, 0)) {
-                clearInterval(interval);
-                points += (60 - time); // Score based on time taken
-                document.getElementById('points').innerText = `Punkte: ${points}`;
-                setTimeout(() => alert("Gewonnen! Alle Schiffe versenkt!"), 100);
-                setTimeout(startRandomGame, 2000); // Weiterleitung zum nächsten Spiel
-            }
-        } else {
-            cell.classList.add('miss');
+        document.getElementById('score').innerText = points;
+
+        // Check for win condition
+        if (totalHits === ships.reduce((acc, ship) => acc + ship.length, 0)) {
+            setTimeout(startRandomGame, 2000);
         }
     }
 
