@@ -23,7 +23,6 @@
             justify-content: center;
             font-size: 20px;
         }
-        /* Clear separation for 3x3 grids */
         .sudoku-cell:nth-child(3n+1) {
             border-left: 2px solid black;
         }
@@ -57,6 +56,19 @@
             padding: 10px;
             margin: 10px;
             cursor: pointer;
+        }
+        #schiffe-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-gap: 2px;
+            margin: 20px auto;
+        }
+        .schiffe-cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid black;
+            cursor: pointer;
+            background-color: lightblue;
         }
     </style>
 </head>
@@ -136,10 +148,10 @@
     function checkSudoku(cell, row, col, grid) {
         const inputValue = parseInt(cell.innerText);
         if (inputValue === grid[row][col]) {
-            cell.style.color = 'green';
+            cell.style.backgroundColor = 'green';
             points += 10;
         } else {
-            cell.style.color = 'red';
+            cell.style.backgroundColor = 'red';
             points -= 5;
         }
         document.getElementById('score').innerText = points;
@@ -214,9 +226,9 @@
         ships.forEach(ship => {
             let placed = false;
             while (!placed) {
-                const direction = Math.random() < 0.5; // true for horizontal, false for vertical
-                const startX = Math.floor(Math.random() * (10 - (direction ? ship.length : 1)));
-                const startY = Math.floor(Math.random() * (10 - (direction ? 1 : ship.length)));
+                const direction = Math.random() < 0.5; // horizontal or vertical
+                const startX = Math.floor(Math.random() * (direction ? 10 - ship.length : 10));
+                const startY = Math.floor(Math.random() * (direction ? 10 : 10 - ship.length));
 
                 let canPlace = true;
                 for (let i = 0; i < ship.length; i++) {
